@@ -37,9 +37,20 @@ class AppDelegate: FlutterAppDelegate {
                 } else {
                     result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments", details: nil))
                 }
+                case "saveCurrentColor":
+                    self.colorPicker?.saveCurrentColor()
+                    result(nil)
+
             default:
                 result(FlutterMethodNotImplemented)
             }
+        }
+
+        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "l" {
+                self.colorPicker?.saveCurrentColor()
+            }
+            return event
         }
 
         NotificationCenter.default.addObserver(forName: NSNotification.Name("ColorUpdated"), object: nil, queue: .main) { [weak self] notification in
@@ -54,6 +65,16 @@ class AppDelegate: FlutterAppDelegate {
                 ])
             }
         }
+
+        NotificationCenter.default.addObserver(forName: NSNotification.Name("ColorSaved"), object: nil, queue: .main) { [weak self] notification in
+            if let userInfo = notification.userInfo,
+               let color = userInfo["color"] as? [Int] {
+                self?.channel?.invokeMethod("colorSaved", arguments: [
+                    "color": color
+                ])
+            }
+        }
+
 
         requestScreenCaptureAccess()
     }

@@ -3,8 +3,9 @@ import '../utils/color_utils.dart';
 
 class ColorDisplay extends StatelessWidget {
   final Color color;
+  final ColorFormat format;
 
-  const ColorDisplay({Key? key, required this.color}) : super(key: key);
+  const ColorDisplay({Key? key, required this.color, required this.format}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -19,8 +20,7 @@ class ColorDisplay extends StatelessWidget {
             height: 100,
             color: color,
           ),
-          Text('RGB: ${ColorUtils.rgbString(color)}'),
-          Text('Hex: ${ColorUtils.hexString(color)}'),
+          Text(ColorUtils.formatColor(color, format)),
         ],
       ),
     );

@@ -5,6 +5,7 @@ import FlutterMacOS
     private var isTracking = false
     private var trackingTimer: Timer?
     private var flutterResult: FlutterResult?
+    private var lastColor: NSColor?
 
     @objc func startColorPicking(result: @escaping FlutterResult) {
         isTracking = true
@@ -49,6 +50,17 @@ import FlutterMacOS
         }
     }
 
+    @objc func saveCurrentColor() {
+        if let color = lastColor {
+            let red = Int(color.redComponent * 255)
+            let green = Int(color.greenComponent * 255)
+            let blue = Int(color.blueComponent * 255)
+            NotificationCenter.default.post(name: NSNotification.Name("ColorSaved"), object: nil, userInfo: [
+                "color": [red, green, blue]
+            ])
+        }
+    }
+
     private func startTracking() {
         trackingTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             self?.updateColorAtMousePosition()}
@@ -58,6 +70,8 @@ import FlutterMacOS
         let mouseLocation = NSEvent.mouseLocation
         if let screenWithMouse = NSScreen.screens.first(where: { NSMouseInRect(mouseLocation, $0.frame, false) }),
            let color = getColorAtPosition(mouseLocation, on: screenWithMouse) {
+           lastColor = color
+
             let red = Int(color.redComponent * 255)
             let green = Int(color.greenComponent * 255)
             let blue = Int(color.blueComponent * 255)
