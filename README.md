@@ -2,6 +2,9 @@
 
 ColorPicker is a multi-platform Flutter application for picking colors from anywhere on your screen. It's designed primarily for desktop use (macOS, Windows, Linux) with a focus on macOS.
 
+
+![Demo](demo/demo.gif)
+
 ## Features
 
 - Run in the background with a menu bar icon
