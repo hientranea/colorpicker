@@ -10,7 +10,7 @@ class ColorUtils {
   }
 
   static String hexString(Color color) {
-    return '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+    return '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}'.toUpperCase();
   }
 
   static String hslString(Color color) {

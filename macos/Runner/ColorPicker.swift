@@ -18,7 +18,7 @@ import FlutterMacOS
           assertionFailure()
           return
         }
-        let size: CGFloat = 13 // Size of the magnified area
+        let size: CGFloat = 9 // Size of the magnified area
         let flippedY = mainScreen.frame.height - y
         if let screenWithMouse = NSScreen.screens.first(where: { NSMouseInRect(NSPoint(x: x, y: flippedY), $0.frame, false) }) {
             let rectX = max(0, min(x - size/2, screenWithMouse.frame.width - size))

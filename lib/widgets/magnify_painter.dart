@@ -28,7 +28,7 @@ class MagnifyPainter extends CustomPainter {
 
     // Draw a border
     final borderPaint = Paint()
-      ..color = AppColors.backgroundGrey
+      ..color = Colors.grey
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
 

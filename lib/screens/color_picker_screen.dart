@@ -336,7 +336,10 @@ class _ColorPickerScreenState extends State<ColorPickerScreen>
           IconButton(
             icon: const Icon(Icons.copy),
             onPressed: () {
-              // TODO: Implement copy functionality
+              Clipboard.setData(ClipboardData(text: value));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('$format value copied to clipboard')),
+              );
             },
           ),
         ],
