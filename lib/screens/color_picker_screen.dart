@@ -75,6 +75,15 @@ class _ColorPickerScreenState extends State<ColorPickerScreen>
           }
         }
         break;
+      case 'log':
+        if (call.arguments is Map) {
+          final Map<dynamic, dynamic> args =
+          call.arguments as Map<dynamic, dynamic>;
+          if (args.containsKey('log')) {
+            print("IOS log: ${args['log']}");
+          }
+        }
+        break;
       default:
         print("Unhandled method: ${call.method}");
     }
