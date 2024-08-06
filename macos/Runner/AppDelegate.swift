@@ -6,7 +6,8 @@ import Foundation
 class AppDelegate: FlutterAppDelegate {
     private var colorPicker: ColorPicker?
     private var channel: FlutterMethodChannel?
-    
+    private var currentHotkey: [String] = ["Cmd", "L"]
+
     override func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false
     }
@@ -40,6 +41,8 @@ class AppDelegate: FlutterAppDelegate {
             case "saveCurrentColor":
                 self.colorPicker?.saveCurrentColor()
                 result(nil)
+            case "updateHotkey":
+                self.updateHotkey(call, result: result)
                 
             default:
                 result(FlutterMethodNotImplemented)
@@ -47,7 +50,11 @@ class AppDelegate: FlutterAppDelegate {
         }
         
         NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers == "l" {
+            let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+            let keyChar = event.charactersIgnoringModifiers ?? ""
+            let pressedHotkey = self.getHotkeyArray(modifiers: modifiers, key: keyChar)
+
+            if pressedHotkey == self.currentHotkey {
                 self.colorPicker?.saveCurrentColor()
             }
             return event
@@ -85,6 +92,25 @@ class AppDelegate: FlutterAppDelegate {
         
         
         requestScreenCaptureAccess()
+    }
+
+    private func getHotkeyArray(modifiers: NSEvent.ModifierFlags, key: String) -> [String] {
+        var hotkeyParts: [String] = []
+        if modifiers.contains(.command) { hotkeyParts.append("Cmd") }
+        if modifiers.contains(.option) { hotkeyParts.append("Option") }
+        if modifiers.contains(.control) { hotkeyParts.append("Ctrl") }
+        if modifiers.contains(.shift) { hotkeyParts.append("Shift") }
+        hotkeyParts.append(key.uppercased())
+        return hotkeyParts
+    }
+
+    @objc func updateHotkey(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        if let hotkey = call.arguments as? String {
+            self.currentHotkey = hotkey.components(separatedBy: " + ")
+            result(nil)
+        } else {
+            result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid hotkey", details: nil))
+        }
     }
     
     private func requestScreenCaptureAccess() {

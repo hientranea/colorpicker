@@ -1,12 +1,15 @@
-import 'package:colorpicker/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 
 class MagnifyPainter extends CustomPainter {
   final ui.Image image;
   final double borderRadius;
+  final Color centerSquareColor;
 
-  MagnifyPainter(this.image, {this.borderRadius = 8.0});
+  MagnifyPainter(this.image, {
+    this.borderRadius = 8.0,
+    this.centerSquareColor = Colors.red,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -33,6 +36,21 @@ class MagnifyPainter extends CustomPainter {
       ..strokeWidth = 2.0;
 
     canvas.drawPath(path, borderPaint);
+
+    // Draw the center square
+    final centerSquareSize = size.width / 9; // Adjust this value to change the size of the center square
+    final centerSquare = Rect.fromCenter(
+      center: Offset(size.width / 2, size.height / 2),
+      width: centerSquareSize,
+      height: centerSquareSize,
+    );
+
+    final centerSquarePaint = Paint()
+      ..color = centerSquareColor.withOpacity(0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    canvas.drawRect(centerSquare, centerSquarePaint);
   }
 
   @override

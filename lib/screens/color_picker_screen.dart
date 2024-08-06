@@ -7,7 +7,9 @@ import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../utils/color_utils.dart';
+import '../widgets/footer_guide.dart';
 import '../widgets/magnifier_view.dart';
+import 'settings_screen.dart';
 
 class ColorPickerScreen extends StatefulWidget {
   const ColorPickerScreen({Key? key}) : super(key: key);
@@ -206,6 +208,7 @@ class _ColorPickerScreenState extends State<ColorPickerScreen>
             Expanded(
               child: _buildColorDisplay(),
             ),
+            const FooterGuide(),
           ],
         ),
       ),
@@ -273,7 +276,10 @@ class _ColorPickerScreenState extends State<ColorPickerScreen>
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              // TODO: Implement settings functionality
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SettingsScreen()),
+              );
             },
           ),
         ],
