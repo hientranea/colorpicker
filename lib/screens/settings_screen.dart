@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../utils/constants.dart';
+import '../utils/hotkey_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   @override
@@ -8,7 +12,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  String _currentHotkey = 'Cmd + L';
+  String _currentHotkey = Constants.defaultHotKey;
   bool _isRecording = false;
   Set<LogicalKeyboardKey> _pressedKeys = {};
   final FocusNode _focusNode = FocusNode();
@@ -28,14 +32,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _loadSavedHotkey() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _currentHotkey = prefs.getString('hotkey') ?? 'Cmd + L';
+      _currentHotkey = prefs.getString('hotkey') ?? Constants.defaultHotKey;
     });
   }
 
   void _saveHotkey(String hotkey) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('hotkey', hotkey);
-    // Communicate the new hotkey to the native side
+    Provider.of<HotkeyProvider>(context, listen: false).updateHotkey(hotkey);
     const platform = MethodChannel('com.example.colorpicker/color_picker');
     await platform.invokeMethod('updateHotkey', hotkey);
   }
@@ -53,7 +57,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _isRecording = false;
     });
     if (_pressedKeys.isNotEmpty) {
-      String newHotkey = _pressedKeys.map((key) => _getKeyName(key)).join(' + ');
+      String newHotkey =
+          _pressedKeys.map((key) => _getKeyName(key)).join(' + ');
       setState(() {
         _currentHotkey = newHotkey;
       });
@@ -64,10 +69,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   String _getKeyName(LogicalKeyboardKey key) {
-    if (key == LogicalKeyboardKey.metaLeft || key == LogicalKeyboardKey.metaRight) return 'Cmd';
-    if (key == LogicalKeyboardKey.altLeft || key == LogicalKeyboardKey.altRight) return 'Option';
-    if (key == LogicalKeyboardKey.controlLeft || key == LogicalKeyboardKey.controlRight) return 'Ctrl';
-    if (key == LogicalKeyboardKey.shiftLeft || key == LogicalKeyboardKey.shiftRight) return 'Shift';
+    if (key == LogicalKeyboardKey.metaLeft ||
+        key == LogicalKeyboardKey.metaRight) return 'Cmd';
+    if (key == LogicalKeyboardKey.altLeft || key == LogicalKeyboardKey.altRight)
+      return 'Option';
+    if (key == LogicalKeyboardKey.controlLeft ||
+        key == LogicalKeyboardKey.controlRight) return 'Ctrl';
+    if (key == LogicalKeyboardKey.shiftLeft ||
+        key == LogicalKeyboardKey.shiftRight) return 'Shift';
     return key.keyLabel.toUpperCase();
   }
 
@@ -80,7 +89,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: KeyboardListener(
         focusNode: _focusNode,
         onKeyEvent: (KeyEvent event) {
-          print('Key event: ${event.runtimeType}, ${event.logicalKey}'); // Debug print
+          print(
+              'Key event: ${event.runtimeType}, ${event.logicalKey}'); // Debug print
           if (_isRecording) {
             if (event is KeyDownEvent) {
               setState(() {
@@ -110,11 +120,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(_isRecording
-                        ? _pressedKeys.map((key) => _getKeyName(key)).join(' + ')
-                        : _currentHotkey
-                    ),
+                        ? _pressedKeys
+                            .map((key) => _getKeyName(key))
+                            .join(' + ')
+                        : _currentHotkey),
                     ElevatedButton(
-                      onPressed: _isRecording ? _stopRecording : _startRecording,
+                      onPressed:
+                          _isRecording ? _stopRecording : _startRecording,
                       child: Text(_isRecording ? 'Stop' : 'Change'),
                     ),
                   ],

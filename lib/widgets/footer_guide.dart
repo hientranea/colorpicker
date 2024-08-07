@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 class FooterGuide extends StatelessWidget {
-  const FooterGuide({Key? key}) : super(key: key);
+  final String hotkey;
+
+  const FooterGuide({Key? key, required this.hotkey}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -10,12 +12,13 @@ class FooterGuide extends StatelessWidget {
       color: Colors.grey[200],
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(Icons.keyboard_command_key, size: 16),
-          Text('+'),
-          Text('L', style: TextStyle(fontWeight: FontWeight.bold)),
-          SizedBox(width: 8),
-          Text('to save current color'),
+        children: [
+          ...hotkey.split('+').map((key) => Text(key.trim())).expand(
+                (widget) => [widget, const Text('+')],
+          ).toList()
+            ..removeLast(),
+          const SizedBox(width: 8),
+          const Text('to save current color'),
         ],
       ),
     );

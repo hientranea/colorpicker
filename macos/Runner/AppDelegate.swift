@@ -7,7 +7,10 @@ class AppDelegate: FlutterAppDelegate {
     private var colorPicker: ColorPicker?
     private var channel: FlutterMethodChannel?
     private var currentHotkey: [String] = ["Cmd", "L"]
-
+    private var eventMonitor: Any?
+    private var localMonitor: Any?
+    private var isPickingColor = false
+    
     override func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false
     }
@@ -17,6 +20,8 @@ class AppDelegate: FlutterAppDelegate {
     }
     
     override func applicationDidFinishLaunching(_ notification: Notification) {
+        mainFlutterWindow?.level = .floating
+        
         let controller = mainFlutterWindow?.contentViewController as! FlutterViewController
         channel = FlutterMethodChannel(name: "com.example.colorpicker/color_picker", binaryMessenger: controller.engine.binaryMessenger)
         
@@ -27,9 +32,12 @@ class AppDelegate: FlutterAppDelegate {
             
             switch call.method {
             case "startColorPicking":
+                self.isPickingColor = true
                 self.colorPicker?.startColorPicking(result: result)
             case "stopColorPicking":
-                self.colorPicker?.stopColorPicking()
+                self.stopColorPicking()
+                result(nil)
+                
             case "getMagnifiedImage":
                 if let args = call.arguments as? [String: Any],
                    let x = args["x"] as? CGFloat,
@@ -49,17 +57,15 @@ class AppDelegate: FlutterAppDelegate {
             }
         }
         
-        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-            let keyChar = event.charactersIgnoringModifiers ?? ""
-            let pressedHotkey = self.getHotkeyArray(modifiers: modifiers, key: keyChar)
-
-            if pressedHotkey == self.currentHotkey {
-                self.colorPicker?.saveCurrentColor()
+        localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            if self.checkAndTriggerHotkey(event) {
+                return nil // Consume the event
             }
             return event
         }
         
+        setupEventMonitor()
+
         NotificationCenter.default.addObserver(forName: NSNotification.Name("ColorUpdated"), object: nil, queue: .main) { [weak self] notification in
             if let userInfo = notification.userInfo,
                let color = userInfo["color"] as? [Int],
@@ -93,7 +99,21 @@ class AppDelegate: FlutterAppDelegate {
         
         requestScreenCaptureAccess()
     }
-
+    
+    override func applicationWillTerminate(_ notification: Notification) {
+        if let local = localMonitor {
+            NSEvent.removeMonitor(local)
+        }
+        if let monitor = eventMonitor {
+            NSEvent.removeMonitor(monitor)
+        }
+    }
+    
+    private func stopColorPicking() {
+        self.isPickingColor = false
+        self.colorPicker?.stopColorPicking()
+    }
+    
     private func getHotkeyArray(modifiers: NSEvent.ModifierFlags, key: String) -> [String] {
         var hotkeyParts: [String] = []
         if modifiers.contains(.command) { hotkeyParts.append("Cmd") }
@@ -104,9 +124,34 @@ class AppDelegate: FlutterAppDelegate {
         return hotkeyParts
     }
 
+    private func setupEventMonitor() {
+        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+            guard let self = self, self.isPickingColor else { return }
+            
+            let mouseLocation = NSEvent.mouseLocation
+            if self.colorPicker?.getColorAtPosition(mouseLocation) != nil {
+                self.colorPicker?.saveCurrentColor()
+                self.stopColorPicking()
+            }
+        }
+    }
+    
+    private func checkAndTriggerHotkey(_ event: NSEvent) -> Bool {
+        let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        let keyChar = event.charactersIgnoringModifiers ?? ""
+        let pressedHotkey = self.getHotkeyArray(modifiers: modifiers, key: keyChar)
+        
+        if pressedHotkey == self.currentHotkey {
+            self.colorPicker?.saveCurrentColor()
+            return true
+        }
+        return false
+    }
+    
     @objc func updateHotkey(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         if let hotkey = call.arguments as? String {
             self.currentHotkey = hotkey.components(separatedBy: " + ")
+            //            NotificationCenter.default.post(name: NSNotification.Name("HotkeyUpdated"), object: nil, userInfo: ["hotkey": hotkey])
             result(nil)
         } else {
             result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid hotkey", details: nil))
