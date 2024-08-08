@@ -316,8 +316,11 @@ class _ColorPickerScreenState extends State<ColorPickerScreen>
       children: [
         _buildColorFormatDisplay('HEX', ColorUtils.hexString(_pickedColor)),
         _buildColorFormatDisplay('RGB', ColorUtils.rgbString(_pickedColor)),
-        _buildColorFormatDisplay('HSL', ColorUtils.hslString(_pickedColor)),
-        _buildColorFormatDisplay('HSV', ColorUtils.hsvString(_pickedColor)),
+        // _buildColorFormatDisplay('HSL', ColorUtils.hslString(_pickedColor)),
+        // _buildColorFormatDisplay('HSV', ColorUtils.hsvString(_pickedColor)),
+        _buildColorFormatDisplay('HSB', ColorUtils.hsbString(_pickedColor)),
+        // _buildColorFormatDisplay('CMYK', ColorUtils.cmykString(_pickedColor)),
+        // _buildColorFormatDisplay('LAB', ColorUtils.labString(_pickedColor)),
       ],
     );
   }

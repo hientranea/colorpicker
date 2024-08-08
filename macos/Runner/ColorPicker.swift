@@ -55,7 +55,9 @@ import QuartzCore
     @objc func saveCurrentColor() {
         guard let color = lastColor else { return }
         let rgb = color.rgbComponents
-        NotificationCenter.default.post(name: NSNotification.Name("ColorSaved"), object: nil, userInfo: ["color": rgb])
+        NotificationCenter.default.post(name: NSNotification.Name("ColorSaved"), object: nil, userInfo: [
+            "color": rgb
+        ])
     }
     
     @objc func stopColorPicking() {
@@ -68,7 +70,7 @@ import QuartzCore
         guard let screenWithMouse = NSScreen.screens.first(where: { NSMouseInRect(position, $0.frame, false) }) else { return nil }
         return getColorAtPosition(position, on: screenWithMouse)
     }
-
+    
     private func updateColorAtMousePosition() {
         let mouseLocation = NSEvent.mouseLocation
         guard let screenWithMouse = NSScreen.screens.first(where: { NSMouseInRect(mouseLocation, $0.frame, false) }),
@@ -76,7 +78,6 @@ import QuartzCore
         
         lastColor = color
         let rgb = color.rgbComponents
-        
         NotificationCenter.default.post(name: NSNotification.Name("ColorUpdated"), object: nil, userInfo: [
             "color": rgb,
             "x": mouseLocation.x,

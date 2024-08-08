@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-enum ColorFormat { sRGB, adobeRGB1998 }
+enum ColorFormat { sRGB, adobeRGB1998, HSB, CMYK, LAB  }
 
 class ColorUtils {
   static String rgbString(Color color) {
@@ -23,12 +23,113 @@ class ColorUtils {
     return '${hsvColor.hue.round()}, ${(hsvColor.saturation * 100).round()}%, ${(hsvColor.value * 100).round()}%';
   }
 
+  static String hsbString(Color color) {
+    var r = color.red.clamp(0, 255);
+    var g = color.green.clamp(0, 255);
+    var b = color.blue.clamp(0, 255);
+
+    // Convert RGB to the range 0-1
+    double rf = r / 255;
+    double gf = g / 255;
+    double bf = b / 255;
+
+    double maxVal = max(rf, max(gf, bf));
+    double minVal = min(rf, min(gf, bf));
+
+    double delta = maxVal - minVal;
+
+    double hue = 0;
+    double saturation = 0;
+    double brightness = maxVal;
+
+    if (delta != 0) {
+      if (maxVal == rf) {
+        hue = ((gf - bf) / delta) % 6;
+      } else if (maxVal == gf) {
+        hue = (bf - rf) / delta + 2;
+      } else {
+        hue = (rf - gf) / delta + 4;
+      }
+
+      hue *= 60;
+      if (hue < 0) hue += 360;
+
+      saturation = maxVal != 0 ? delta / maxVal : 0;
+    }
+
+    return "${hue}, ${saturation * 100}, ${brightness * 100}";
+  }
+
+  static String cmykString(Color color) {
+    var r = color.red;
+    var g = color.green;
+    var b = color.blue;
+
+    // Ensure RGB values are in the correct range (0-255)
+    r = r.clamp(0, 255);
+    g = g.clamp(0, 255);
+    b = b.clamp(0, 255);
+
+    // Convert RGB to 0-1 range
+    double r1 = r / 255;
+    double g1 = g / 255;
+    double b1 = b / 255;
+
+    // Calculate K (black)
+    double k = 1 - max(r1, max(g1, b1));
+
+    // Calculate C, M, Y
+    double c = k == 1 ? 0 : (1 - r1 - k) / (1 - k);
+    double m = k == 1 ? 0 : (1 - g1 - k) / (1 - k);
+    double y = k == 1 ? 0 : (1 - b1 - k) / (1 - k);
+
+    // Round to 3 decimal places and ensure values are between 0 and 1
+    int cPercent = (c * 100).round();
+    int mPercent = (m * 100).round();
+    int yPercent = (y * 100).round();
+    int kPercent = (k * 100).round();
+
+    return "${cPercent.clamp(0, 100)}%, ${mPercent.clamp(0, 100)}%, ${yPercent.clamp(0, 100)}%, ${kPercent.clamp(0, 100)}%";
+  }
+
+  static String labString(Color color) {
+    // Convert RGB to XYZ
+    List<double> xyz = _sRGBtoXYZ(color);
+
+    // Convert XYZ to LAB
+    List<double> lab = _XYZtoLAB(xyz);
+
+    return '${lab[0].round()}, ${lab[1].round()}, ${lab[2].round()}';
+  }
+
+  static List<double> _XYZtoLAB(List<double> xyz) {
+    double x = xyz[0] / 95.047;
+    double y = xyz[1] / 100.0;
+    double z = xyz[2] / 108.883;
+
+    x = x > 0.008856 ? pow(x, 1/3).toDouble() : (7.787 * x) + (16 / 116);
+    y = y > 0.008856 ? pow(y, 1/3).toDouble() : (7.787 * y) + (16 / 116);
+    z = z > 0.008856 ? pow(z, 1/3).toDouble() : (7.787 * z) + (16 / 116);
+
+    double l = (116 * y) - 16;
+    double a = 500 * (x - y);
+    double b = 200 * (y - z);
+
+    return [l, a, b];
+  }
+
   static String formatColor(Color color, ColorFormat format) {
     switch (format) {
       case ColorFormat.sRGB:
         return 'RGB(${color.red}, ${color.green}, ${color.blue})';
       case ColorFormat.adobeRGB1998:
         return adobeRGBString(color);
+      case ColorFormat.HSB:
+        return 'HSB(${hsbString(color)})';
+      case ColorFormat.LAB:
+        return 'LAB(${labString(color)})';
+      default:
+        return "";
     }
   }
 
